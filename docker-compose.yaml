@@ -12,6 +12,7 @@ services:
       - ./logs:/workspace/logs
       - ./SoVITS_weights:/workspace/SoVITS_weights
       - ./reference:/workspace/reference
+      - ./GPT_SoVITS/pretrained_models:/workspace/GPT_SoVITS/pretrained_models
     working_dir: /workspace
     ports:
       - "6606:9880" # api
