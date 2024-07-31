@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  gpt-sovits:
+  gpt-sovits-v3:
     image: breakstring/gpt-sovits:latest   # please change the image name and tag base your environment. If the tag contains the word 'elite', such as "latest-elite", it indicates that the image does not include the necessary models such as GPT-SoVITS, UVR5, Damo ASR, etc. You will need to download them yourself and map them into the container.
-    container_name: gpt-sovits-container
+    container_name: gpt-sovits-container-v3
     environment:
       - is_half=False
       - is_share=False
@@ -12,21 +12,24 @@ services:
       - ./logs:/workspace/logs
       - ./SoVITS_weights:/workspace/SoVITS_weights
       - ./reference:/workspace/reference
+      - .:/workspace
     working_dir: /workspace
     ports:
-      - "9880:9880"
-      - "9871:9871"
-      - "9872:9872"
-      - "9873:9873"
-      - "9874:9874"
+      - "6616:9880" # api
+      # - "9871:9871"
+      # - "6607:9872" # infer webui
+      # - "9873:9873"
+      # - "9874:9874"
     shm_size: 16G
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
-            count: "all"
+            #count: "all"
             capabilities: [gpu]
+            device_ids: [ "1"]
+    command: ["sh", "-c", "python api_v3.py"]
     stdin_open: true
     tty: true
     restart: unless-stopped
