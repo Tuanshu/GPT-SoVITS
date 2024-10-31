@@ -136,7 +136,7 @@ port = args.port
 host = args.bind_addr
 argv = sys.argv
 
-APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"},{"url": "http://10.20.216.230:6616"}])
+APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"},{"url": "http://10.20.216.222:6616"}])
 
 
 class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
