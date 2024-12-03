@@ -124,6 +124,7 @@ from GPT_SoVITS.TTS_infer_pack.text_segmentation_method import get_method_names 
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from functools import lru_cache
+from starlette.middleware.base import BaseHTTPMiddleware
 
 cut_method_names = get_cut_method_names()
 
@@ -135,8 +136,22 @@ port = args.port
 host = args.bind_addr
 argv = sys.argv
 
-APP = FastAPI()
+APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"},{"url": "http://10.20.216.222:6616"}])
 
+
+class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        base_url = str(request.base_url)
+
+        print(f'call from {base_url}')
+        if "cloud-gateway.ces.myfiinet.com" in base_url:
+            APP.openapi_url = "/ai-audio/tts/openapi.json"
+        else:
+            APP.openapi_url = "openapi.json"
+        return response
+    
+APP.add_middleware(CustomOpenAPIMiddleware)
 
 class TTS_Request(BaseModel):
     text: str = None
@@ -331,7 +346,7 @@ async def tts_handle(req: dict):
                     media_type = "raw"
                 for sr, chunk in tts_generator:
                     yield pack_audio(BytesIO(), chunk, sr, media_type).getvalue()
-                move_to_cpu(tts_instance)
+                # move_to_cpu(tts_instance)
 
             # _media_type = f"audio/{media_type}" if not (streaming_mode and media_type in ["wav", "raw"]) else f"audio/x-{media_type}"
             return StreamingResponse(streaming_generator(tts_generator, media_type, ), media_type=f"audio/{media_type}")
