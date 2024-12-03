@@ -116,7 +116,7 @@ import subprocess
 import wave
 from functools import lru_cache
 from io import BytesIO
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import soundfile as sf
@@ -150,8 +150,8 @@ speakers: dict[str, "Speaker"] = {}
 
 class Speaker(BaseModel):
     name: str
-    prompt_text: str | None = None
-    prompt_lang: str | None = None
+    prompt_text: Union[str , None] = None
+    prompt_lang: Union[str , None] = None
 
     @property
     def audio_path(self):
@@ -170,7 +170,7 @@ class Speaker(BaseModel):
         speakers[name] = Speaker.model_validate(speaker_data)
         return speakers[name]
 
-    def update(self, audio: UploadFile | None, prompt_lang: str | None, prompt_text: str | None):
+    def update(self, audio: Union[UploadFile ,None], prompt_lang: Union[str ,None], prompt_text: Union[str , None]):
         # 確認audio.filename是wav
         if audio is not None:
             if not audio.filename.endswith(".wav"):
