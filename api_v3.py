@@ -384,9 +384,10 @@ async def control(command: str = None):
 async def tts_get_endpoint(
         text: str = None,
         text_lang: str = None,
-        ref_audio_path: str = None,
-        prompt_lang: str = None,
-        prompt_text: str = "",
+        speaker:str=None, # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
+        ref_audio_path: str = None, # part of speaker (1/3)
+        prompt_lang: str = None, # part of speaker (2/3)
+        prompt_text: str = "", # part of speaker (3/3)
         top_k: int = 5,
         top_p: float = 1,
         temperature: float = 1,
