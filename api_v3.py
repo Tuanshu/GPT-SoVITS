@@ -117,7 +117,7 @@ import wave
 from functools import lru_cache
 from io import BytesIO
 from typing import Optional
-
+import glob
 import numpy as np
 import soundfile as sf
 import uvicorn
@@ -167,7 +167,13 @@ class Speaker(BaseModel):
             return None
         with open(speaker_json_path, "r") as f:
             speaker_data = json.load(f)
-        speakers[name] = Speaker.model_validate(speaker_data)
+        found_speaker = Speaker.model_validate(speaker_data)
+
+        if not os.path.exists(found_speaker.audio_path):
+            print(f"speaker {name} found without audio file")
+            return None
+
+        speakers[name] = found_speaker
         return speakers[name]
 
     def update(self, audio: UploadFile | None, prompt_lang: str | None, prompt_text: str | None):
@@ -542,7 +548,12 @@ async def upload_speaker(
 
 @APP.get("/speakers")
 async def get_speakers():
-    # dumps
+    # 檢查SPEAKER_HOME_DIR, 找所有json, 然後嘗試Speaker.get_by_name for all json
+    speaker_dict_dump = {}
+    for speaker_json_path in glob.glob(os.path.join(SPEAKER_HOME_DIR, "*.json")):
+        speaker_name = os.path.basename(speaker_json_path).split(".")[0]
+        speaker_obj = Speaker.get_by_name(speaker_name)  # will persist if exist
+
     speaker_dict_dump = {k: v.model_dump() for k, v in speakers.items()}
     return JSONResponse(status_code=200, content={"speakers": speaker_dict_dump})
 
