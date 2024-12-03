@@ -464,7 +464,6 @@ class Text2SemanticDecoder(nn.Module):
             (0, y_len),
             value=True,
         )
-        # x_attn_mask[:, x_len]=False 
         y_attn_mask = F.pad(
             torch.triu(
                 torch.ones(y_len, y_len, dtype=torch.bool, device=x.device),
@@ -530,7 +529,7 @@ class Text2SemanticDecoder(nn.Module):
                 value=True,
             )
             y_attn_mask = F.pad(
-                torch.triu(torch.ones(y_len, y_len, dtype=torch.bool), diagonal=0),
+                torch.triu(torch.ones(y_len, y_len, dtype=torch.bool), diagonal=1),
                 (x_len, 0),
                 value=False,
             )
@@ -827,13 +826,7 @@ class Text2SemanticDecoder(nn.Module):
 
         bsz = x.shape[0]
         src_len = x_len + y_len
-        bsz = x.shape[0]
-        src_len = x_len + y_len
         x_attn_mask_pad = F.pad(
-            x_attn_mask,
-            (0, y_len),  ###xx的纯0扩展到xx纯0+xy纯1，(x,x+y)
-            value=True,
-        )
             x_attn_mask,
             (0, y_len),  ###xx的纯0扩展到xx纯0+xy纯1，(x,x+y)
             value=True,
@@ -855,11 +848,6 @@ class Text2SemanticDecoder(nn.Module):
             else:
                 xy_dec, k_cache, v_cache = self.t2s_transformer.decode_next_token(xy_pos, k_cache, v_cache)
 
-            if xy_attn_mask is not None:
-                xy_dec, k_cache, v_cache = self.t2s_transformer.process_prompt(xy_pos, xy_attn_mask, None)
-            else:
-                xy_dec, k_cache, v_cache = self.t2s_transformer.decode_next_token(xy_pos, k_cache, v_cache)
-
             logits = self.ar_predict_layer(
                 xy_dec[:, -1]
             )
@@ -870,10 +858,6 @@ class Text2SemanticDecoder(nn.Module):
                 logits = logits[:, :-1]
 
             samples = sample(
-                logits, y, top_k=top_k, top_p=top_p, repetition_penalty=repetition_penalty, temperature=temperature
-            )[0]
-
-            y = torch.concat([y, samples], dim=1)
                 logits, y, top_k=top_k, top_p=top_p, repetition_penalty=repetition_penalty, temperature=temperature
             )[0]
 
@@ -892,11 +876,7 @@ class Text2SemanticDecoder(nn.Module):
                 print(f"T2S Decoding EOS [{prefix_len} -> {y.shape[1]}]")
                 break
 
-
             ####################### update next step ###################################
-            y_emb = self.ar_audio_embedding(y[:, -1:])
-            xy_pos = y_emb * self.ar_audio_position.x_scale + self.ar_audio_position.alpha * self.ar_audio_position.pe[:, y_len + idx].to(dtype=y_emb.dtype,device=y_emb.device)
-
             y_emb = self.ar_audio_embedding(y[:, -1:])
             xy_pos = y_emb * self.ar_audio_position.x_scale + self.ar_audio_position.alpha * self.ar_audio_position.pe[:, y_len + idx].to(dtype=y_emb.dtype,device=y_emb.device)
 

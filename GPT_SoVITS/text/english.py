@@ -2,7 +2,6 @@ import pickle
 import os
 import re
 import wordsegment
-import wordsegment
 from g2p_en import G2p
 
 from text.symbols import punctuation
@@ -21,7 +20,6 @@ CMU_DICT_PATH = os.path.join(current_file_path, "cmudict.rep")
 CMU_DICT_FAST_PATH = os.path.join(current_file_path, "cmudict-fast.rep")
 CMU_DICT_HOT_PATH = os.path.join(current_file_path, "engdict-hot.rep")
 CACHE_PATH = os.path.join(current_file_path, "engdict_cache.pickle")
-NAMECACHE_PATH = os.path.join(current_file_path, "namedict_cache.pickle")
 NAMECACHE_PATH = os.path.join(current_file_path, "namedict_cache.pickle")
 
 arpa = {
@@ -130,7 +128,6 @@ def read_dict():
                 line = line.strip()
                 word_split = line.split("  ")
                 word = word_split[0].lower()
-                word = word_split[0].lower()
 
                 syllable_split = word_split[1].split(" - ")
                 g2p_dict[word] = []
@@ -151,11 +148,8 @@ def read_dict_new():
         line_index = 1
         while line:
             if line_index >= 57:
-            if line_index >= 57:
                 line = line.strip()
                 word_split = line.split("  ")
-                word = word_split[0].lower()
-                g2p_dict[word] = [word_split[1].split(" ")]
                 word = word_split[0].lower()
                 g2p_dict[word] = [word_split[1].split(" ")]
 
@@ -170,17 +164,12 @@ def read_dict_new():
                 line = line.strip()
                 word_split = line.split(" ")
                 word = word_split[0].lower()
-                word = word_split[0].lower()
                 if word not in g2p_dict:
-                    g2p_dict[word] = [word_split[1:]]
                     g2p_dict[word] = [word_split[1:]]
 
             line_index = line_index + 1
             line = f.readline()
 
-    return g2p_dict
-
-def hot_reload_hot(g2p_dict):
     return g2p_dict
 
 def hot_reload_hot(g2p_dict):
@@ -194,13 +183,9 @@ def hot_reload_hot(g2p_dict):
                 word = word_split[0].lower()
                 # 自定义发音词直接覆盖字典
                 g2p_dict[word] = [word_split[1:]]
-                word = word_split[0].lower()
-                # 自定义发音词直接覆盖字典
-                g2p_dict[word] = [word_split[1:]]
 
             line_index = line_index + 1
             line = f.readline()
-
 
     return g2p_dict
 
@@ -220,19 +205,9 @@ def get_dict():
 
     g2p_dict = hot_reload_hot(g2p_dict)
 
-    g2p_dict = hot_reload_hot(g2p_dict)
-
     return g2p_dict
 
 
-def get_namedict():
-    if os.path.exists(NAMECACHE_PATH):
-        with open(NAMECACHE_PATH, "rb") as pickle_file:
-            name_dict = pickle.load(pickle_file)
-    else:
-        name_dict = {}
-
-    return name_dict
 def get_namedict():
     if os.path.exists(NAMECACHE_PATH):
         with open(NAMECACHE_PATH, "rb") as pickle_file:

@@ -9,7 +9,6 @@
 
 [![Open In Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/github/RVC-Boss/GPT-SoVITS/blob/main/colab_webui.ipynb)
 [![License](https://img.shields.io/badge/LICENSE-MIT-green.svg?style=for-the-badge)](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/LICENSE)
-[![License](https://img.shields.io/badge/LICENSE-MIT-green.svg?style=for-the-badge)](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/LICENSE)
 [![Huggingface](https://img.shields.io/badge/🤗%20-Models%20Repo-yellow.svg?style=for-the-badge)](https://huggingface.co/lj1995/GPT-SoVITS/tree/main)
 [![Discord](https://img.shields.io/discord/1198701940511617164?color=%23738ADB&label=Discord&style=for-the-badge)](https://discord.gg/dnrgs5GHfG)
 
@@ -43,10 +42,6 @@ https://github.com/RVC-Boss/GPT-SoVITS/assets/129054828/05bee1fa-bdd8-4d85-9350-
 
 ### 测试通过的环境
 
-- Python 3.9，PyTorch 2.0.1，CUDA 11
-- Python 3.10.13，PyTorch 2.1.2，CUDA 12.3
-- Python 3.9，Pytorch 2.2.2，macOS 14.4.1（Apple 芯片）
-- Python 3.9，PyTorch 2.2.2，CPU 设备
 - Python 3.9，PyTorch 2.0.1，CUDA 11
 - Python 3.10.13，PyTorch 2.1.2，CUDA 12.3
 - Python 3.9，Pytorch 2.2.2，macOS 14.4.1（Apple 芯片）
@@ -301,7 +296,6 @@ python audio_slicer.py \
 ````
 这是使用命令行完成数据集ASR处理的方式（仅限中文）
 ````
-python tools/asr/funasr_asr.py -i <input> -o <output>
 python tools/asr/funasr_asr.py -i <input> -o <output>
 ````
 通过Faster_Whisper进行ASR处理（除中文之外的ASR标记）

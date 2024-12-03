@@ -49,8 +49,6 @@ For users in China, you can [click here](https://www.codewithgpu.com/i/RVC-Boss/
 - Python 3.10.13, PyTorch 2.1.2, CUDA 12.3
 - Python 3.9, PyTorch 2.2.2, macOS 14.4.1 (Apple silicon)
 - Python 3.9, PyTorch 2.2.2, CPU devices
-- Python 3.9, PyTorch 2.2.2, macOS 14.4.1 (Apple silicon)
-- Python 3.9, PyTorch 2.2.2, CPU devices
 
 _Note: numba==0.56.4 requires py<3.11_
 
@@ -301,7 +299,6 @@ python audio_slicer.py \
 ```
 This is how dataset ASR processing is done using the command line(Only Chinese)
 ```
-python tools/asr/funasr_asr.py -i <input> -o <output>
 python tools/asr/funasr_asr.py -i <input> -o <output>
 ```
 ASR processing is performed through Faster_Whisper(ASR marking except Chinese)
