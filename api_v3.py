@@ -110,23 +110,26 @@ sys.path.append(now_dir)
 sys.path.append("%s/GPT_SoVITS" % (now_dir))
 
 import argparse
+import json
+import signal
 import subprocess
 import wave
-import signal
+from functools import lru_cache
+from io import BytesIO
+from typing import Optional
+
 import numpy as np
 import soundfile as sf
-from fastapi import Response
-from fastapi.responses import JSONResponse
-from fastapi import FastAPI, File, UploadFile, Form
-from typing import Optional
 import uvicorn
-from io import BytesIO
-from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
-from GPT_SoVITS.TTS_infer_pack.text_segmentation_method import get_method_names as get_cut_method_names
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-from functools import lru_cache
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from GPT_SoVITS.TTS_infer_pack.text_segmentation_method import (
+    get_method_names as get_cut_method_names,
+)
+from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
 
 cut_method_names = get_cut_method_names()
 
@@ -139,6 +142,48 @@ host = args.bind_addr
 argv = sys.argv
 
 APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"}, {"url": "http://10.20.216.222:6616"}])
+
+SPEAKER_HOME_DIR = "/workspace/reference"  # 會放audio, 還有一個對應speaker的json
+
+speakers: dict[str, "Speaker"] = {}
+
+
+class Speaker(BaseModel):
+    name: str
+    audio_path: str
+    prompt_text: str | None = None
+    prompt_lang: str | None = None
+
+    @classmethod
+    def get_by_name(cls, name: str):
+        if name in speakers:
+            return speakers[name]
+        speaker_json_path = os.path.join(SPEAKER_HOME_DIR, f"{name}.json")
+        if not os.path.exists(speaker_json_path):
+            print(f"speaker {name} not found")
+            return None
+        with open(speaker_json_path, "r") as f:
+            speaker_data = json.load(f)
+        speakers[name] = Speaker.model_validate(speaker_data)
+        return speakers[name]
+
+    def update(self, audio: UploadFile | None, prompt_lang: str | None, prompt_text: str | None):
+        # 確認audio.filename是wav
+        if audio is not None:
+            if not audio.filename.endswith(".wav"):
+                raise HTTPException(status_code=400, detail="audio must be a wav file")
+            # 使用audio覆蓋{name}.wav
+            audio_path = os.path.join(SPEAKER_HOME_DIR, f"{self.name}.wav")
+            with open(audio_path, "wb") as f:
+                f.write(audio.file.read())
+        if prompt_lang is not None:
+            self.prompt_lang = prompt_lang
+        if prompt_text is not None:
+            self.prompt_text = prompt_text
+        # 更新json
+        speaker_json_path = os.path.join(SPEAKER_HOME_DIR, f"{self.name}.json")
+        with open(speaker_json_path, "w") as f:
+            json.dump(self.model_dump(), f)
 
 
 class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
@@ -382,7 +427,7 @@ async def tts_handle(req: dict):
             move_to_cpu(tts_instance)
             return Response(audio_data, media_type=f"audio/{media_type}")
     except Exception as e:
-        return JSONResponse(status_code=400, content={"message": f"tts failed", "Exception": str(e)})
+        return JSONResponse(status_code=400, content={"message": "tts failed", "Exception": str(e)})
 
 
 def move_to_cpu(tts):
@@ -407,28 +452,37 @@ async def control(command: str = None):
 
 @APP.get("/tts")
 async def tts_get_endpoint(
-        text: str = None,
-        text_lang: str = None,
-        speaker:str=None, # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
-        ref_audio_path: str = None, # part of speaker (1/3)
-        prompt_lang: str = None, # part of speaker (2/3)
-        prompt_text: str = "", # part of speaker (3/3)
-        top_k: int = 5,
-        top_p: float = 1,
-        temperature: float = 1,
-        text_split_method: str = "cut0",
-        batch_size: int = 1,
-        batch_threshold: float = 0.75,
-        split_bucket: bool = True,
-        speed_factor: float = 1.0,
-        fragment_interval: float = 0.3,
-        seed: int = -1,
-        media_type: str = "wav",
-        streaming_mode: bool = False,
-        parallel_infer: bool = True,
-        repetition_penalty: float = 1.35,
-        tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml"
+    text: str = None,
+    text_lang: str = None,
+    speaker: str = None,  # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
+    ref_audio_path: str = None,  # part of speaker (1/3)
+    prompt_lang: str = None,  # part of speaker (2/3)
+    prompt_text: str = "",  # part of speaker (3/3)
+    top_k: int = 5,
+    top_p: float = 1,
+    temperature: float = 1,
+    text_split_method: str = "cut0",
+    batch_size: int = 1,
+    batch_threshold: float = 0.75,
+    split_bucket: bool = True,
+    speed_factor: float = 1.0,
+    fragment_interval: float = 0.3,
+    seed: int = -1,
+    media_type: str = "wav",
+    streaming_mode: bool = False,
+    parallel_infer: bool = True,
+    repetition_penalty: float = 1.35,
+    tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml",
 ):
+    # 如果speaker有給, 則忽略ref_audio_path, prompt_lang, prompt_text
+    if speaker is not None:
+        speaker_obj = Speaker.get_by_name(speaker)
+        if speaker_obj is None:
+            return JSONResponse(status_code=400, content={"message": f"speaker {speaker} not found"})
+        ref_audio_path = speaker_obj.audio_path
+        prompt_lang = speaker_obj.prompt_lang
+        prompt_text = speaker_obj.prompt_text
+
     req = {
         "text": text,
         "text_lang": text_lang.lower(),
@@ -463,32 +517,17 @@ async def tts_post_endpoint(request: TTS_Request):
 
 @APP.post("/upload_speaker")
 async def upload_speaker(
-    name: Optional[str] = Query(None),
+    name: str = Query(None),
+    prompt_lang: Optional[str] = Query(None),
+    prompt_text: Optional[str] = Query(None),
     file: UploadFile = File(...),
     # file_url: str = Form(default=None),
 ):
-    SPEAKER_FOLDER_PATH = "./reference"
-    if not os.path.exists(SPEAKER_FOLDER_PATH):
-        os.makedirs(SPEAKER_FOLDER_PATH)
-
-    if name is None:
-        name = file.filename
-        if name is None:
-            return JSONResponse(status_code=400, content={"message": "file name is required in case of name is None"})
-
-    # if file_url is None:
-
-    file_path = os.path.join(SPEAKER_FOLDER_PATH, name)
-
-    if os.path.exists(file_path):
-        return JSONResponse(status_code=400, content={"message": f"speaker {name} already exists"})
-
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-    # else:
-    # download from url with http
-
-    return JSONResponse(status_code=200, content={"message": "success"})
+    speaker = Speaker.get_by_name(name)
+    if speaker is None:
+        speaker = Speaker(name=name)
+    speaker.update(file, prompt_lang, prompt_text)
+    return JSONResponse(status_code=200, content={"message": f"speaker {name} updated"})
 
 
 @APP.get("/set_refer_audio")
@@ -498,7 +537,7 @@ async def set_refer_audio(refer_audio_path: str = None, tts_infer_yaml_path: str
         tts_instance = get_tts_instance(tts_config)
         tts_instance.set_ref_audio(refer_audio_path)
     except Exception as e:
-        return JSONResponse(status_code=400, content={"message": f"set refer audio failed", "Exception": str(e)})
+        return JSONResponse(status_code=400, content={"message": "set refer audio failed", "Exception": str(e)})
     return JSONResponse(status_code=200, content={"message": "success"})
 
 
@@ -512,7 +551,7 @@ async def set_gpt_weights(weights_path: str = None, tts_infer_yaml_path: str = "
         tts_instance = get_tts_instance(tts_config)
         tts_instance.init_t2s_weights(weights_path)
     except Exception as e:
-        return JSONResponse(status_code=400, content={"message": f"change gpt weight failed", "Exception": str(e)})
+        return JSONResponse(status_code=400, content={"message": "change gpt weight failed", "Exception": str(e)})
 
     return JSONResponse(status_code=200, content={"message": "success"})
 
@@ -527,14 +566,14 @@ async def set_sovits_weights(weights_path: str = None, tts_infer_yaml_path: str 
         tts_instance = get_tts_instance(tts_config)
         tts_instance.init_vits_weights(weights_path)
     except Exception as e:
-        return JSONResponse(status_code=400, content={"message": f"change sovits weight failed", "Exception": str(e)})
+        return JSONResponse(status_code=400, content={"message": "change sovits weight failed", "Exception": str(e)})
     return JSONResponse(status_code=200, content={"message": "success"})
 
 
 if __name__ == "__main__":
     try:
         uvicorn.run(APP, host=host, port=port, workers=1)
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGTERM)
         exit(0)
