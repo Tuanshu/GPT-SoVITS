@@ -489,6 +489,10 @@ async def tts_get_endpoint(
         prompt_lang = speaker_obj.prompt_lang
         prompt_text = speaker_obj.prompt_text
 
+    # ensure prompt_lang is not None for stupid bug
+    if prompt_lang is None:
+        prompt_lang = ""
+
     req = {
         "text": text,
         "text_lang": text_lang.lower(),
