@@ -407,26 +407,27 @@ async def control(command: str = None):
 
 @APP.get("/tts")
 async def tts_get_endpoint(
-    text: str = None,
-    text_lang: str = None,
-    ref_audio_path: str = None,
-    prompt_lang: str = None,
-    prompt_text: str = "",
-    top_k: int = 5,
-    top_p: float = 1,
-    temperature: float = 1,
-    text_split_method: str = "cut0",
-    batch_size: int = 1,
-    batch_threshold: float = 0.75,
-    split_bucket: bool = True,
-    speed_factor: float = 1.0,
-    fragment_interval: float = 0.3,
-    seed: int = -1,
-    media_type: str = "wav",
-    streaming_mode: bool = False,
-    parallel_infer: bool = True,
-    repetition_penalty: float = 1.35,
-    tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml",
+        text: str = None,
+        text_lang: str = None,
+        speaker:str=None, # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
+        ref_audio_path: str = None, # part of speaker (1/3)
+        prompt_lang: str = None, # part of speaker (2/3)
+        prompt_text: str = "", # part of speaker (3/3)
+        top_k: int = 5,
+        top_p: float = 1,
+        temperature: float = 1,
+        text_split_method: str = "cut0",
+        batch_size: int = 1,
+        batch_threshold: float = 0.75,
+        split_bucket: bool = True,
+        speed_factor: float = 1.0,
+        fragment_interval: float = 0.3,
+        seed: int = -1,
+        media_type: str = "wav",
+        streaming_mode: bool = False,
+        parallel_infer: bool = True,
+        repetition_penalty: float = 1.35,
+        tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml"
 ):
     req = {
         "text": text,
