@@ -525,7 +525,7 @@ async def tts_post_endpoint(request: TTS_Request):
     return await tts_handle(req)
 
 
-@APP.post("/upload_speaker")
+@APP.post("/speakers")
 async def upload_speaker(
     name: str = Query(None),
     prompt_lang: Optional[str] = Query(None),
@@ -538,6 +538,13 @@ async def upload_speaker(
         speaker = Speaker(name=name)
     speaker.update(file, prompt_lang, prompt_text)
     return JSONResponse(status_code=200, content={"message": f"speaker {name} updated"})
+
+
+@APP.get("/speakers")
+async def get_speakers():
+    # dumps
+    speaker_dict_dump = {k: v.model_dump() for k, v in speakers.items()}
+    return JSONResponse(status_code=200, content={"speakers": speaker_dict_dump})
 
 
 @APP.get("/set_refer_audio")
