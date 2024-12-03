@@ -188,6 +188,9 @@ class Speaker(BaseModel):
         with open(speaker_json_path, "w") as f:
             json.dump(self.model_dump(), f)
 
+        # ensure self is the one in speakers
+        speakers[self.name] = self
+
 
 class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
