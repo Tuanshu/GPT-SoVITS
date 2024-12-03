@@ -9,6 +9,7 @@
 
 [![Open In Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/github/RVC-Boss/GPT-SoVITS/blob/main/colab_webui.ipynb)
 [![License](https://img.shields.io/badge/LICENSE-MIT-green.svg?style=for-the-badge)](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/LICENSE-MIT-green.svg?style=for-the-badge)](https://github.com/RVC-Boss/GPT-SoVITS/blob/main/LICENSE)
 [![Huggingface](https://img.shields.io/badge/🤗%20-Models%20Repo-yellow.svg?style=for-the-badge)](https://huggingface.co/lj1995/GPT-SoVITS/tree/main)
 [![Discord](https://img.shields.io/discord/1198701940511617164?color=%23738ADB&label=Discord&style=for-the-badge)](https://discord.gg/dnrgs5GHfG)
 
@@ -42,6 +43,8 @@ https://github.com/RVC-Boss/GPT-SoVITS/assets/129054828/05bee1fa-bdd8-4d85-9350-
 
 - Python 3.9, PyTorch 2.0.1, CUDA 11
 - Python 3.10.13, PyTorch 2.1.2, CUDA 12.3
+- Python 3.9, PyTorch 2.2.2, macOS 14.4.1 (Apple silicon)
+- Python 3.9, PyTorch 2.2.2, CPUデバイス
 - Python 3.9, PyTorch 2.2.2, macOS 14.4.1 (Apple silicon)
 - Python 3.9, PyTorch 2.2.2, CPUデバイス
 
@@ -288,6 +291,7 @@ python audio_slicer.py \
 ```
 コマンドラインを使用してデータセット ASR 処理を行う方法です (中国語のみ)
 ```
+python tools/asr/funasr_asr.py -i <input> -o <output>
 python tools/asr/funasr_asr.py -i <input> -o <output>
 ```
 ASR処理はFaster_Whisperを通じて実行されます(中国語を除くASRマーキング)

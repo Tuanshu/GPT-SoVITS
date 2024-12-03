@@ -16,3 +16,5 @@ TEMP
 weight.json
 ffmpeg*
 ffprobe*
+TEMP
+*.wav

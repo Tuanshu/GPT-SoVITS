@@ -5,6 +5,10 @@ import traceback
 os.environ["HF_ENDPOINT"]          = "https://hf-mirror.com"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
+
+os.environ["HF_ENDPOINT"]          = "https://hf-mirror.com"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 import torch
 from faster_whisper import WhisperModel
 from tqdm import tqdm
@@ -35,6 +39,7 @@ language_code_list = [
     "auto"]
 
 def execute_asr(input_folder, output_folder, model_size, language, precision):
+def execute_asr(input_folder, output_folder, model_size, language, precision):
     if '-local' in model_size:
         model_size = model_size[:-6]
         model_path = f'tools/asr/models/faster-whisper-{model_size}'
@@ -52,13 +57,21 @@ def execute_asr(input_folder, output_folder, model_size, language, precision):
     input_file_names = os.listdir(input_folder)
     input_file_names.sort()
 
+    
+    input_file_names = os.listdir(input_folder)
+    input_file_names.sort()
+
     output = []
     output_file_name = os.path.basename(input_folder)
     
     for file_name in tqdm(input_file_names):
+    
+    for file_name in tqdm(input_file_names):
         try:
             file_path = os.path.join(input_folder, file_name)
+            file_path = os.path.join(input_folder, file_name)
             segments, info = model.transcribe(
+                audio          = file_path,
                 audio          = file_path,
                 beam_size      = 5,
                 vad_filter     = True,
@@ -76,7 +89,14 @@ def execute_asr(input_folder, output_folder, model_size, language, precision):
                 for segment in segments:
                     text += segment.text
             output.append(f"{file_path}|{output_file_name}|{info.language.upper()}|{text}")
+            output.append(f"{file_path}|{output_file_name}|{info.language.upper()}|{text}")
         except:
+            print(traceback.format_exc())
+    
+    output_folder = output_folder or "output/asr_opt"
+    os.makedirs(output_folder, exist_ok=True)
+    output_file_path = os.path.abspath(f'{output_folder}/{output_file_name}.list')
+
             print(traceback.format_exc())
     
     output_folder = output_folder or "output/asr_opt"
