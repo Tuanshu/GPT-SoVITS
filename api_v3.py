@@ -150,9 +150,12 @@ speakers: dict[str, "Speaker"] = {}
 
 class Speaker(BaseModel):
     name: str
-    audio_path: str
     prompt_text: str | None = None
     prompt_lang: str | None = None
+
+    @property
+    def audio_path(self):
+        return os.path.join(SPEAKER_HOME_DIR, f"{self.name}.wav")
 
     @classmethod
     def get_by_name(cls, name: str):
