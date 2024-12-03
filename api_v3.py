@@ -78,7 +78,7 @@ GET:
 ```
 http://127.0.0.1:9880/set_gpt_weights?weights_path=GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt
 ```
-RESP: 
+RESP:
 成功: 返回"success", http code 200
 失败: 返回包含错误信息的 json, http code 400
 
@@ -92,11 +92,12 @@ GET:
 http://127.0.0.1:9880/set_sovits_weights?weights_path=GPT_SoVITS/pretrained_models/s2G488k.pth
 ```
 
-RESP: 
+RESP:
 成功: 返回"success", http code 200
 失败: 返回包含错误信息的 json, http code 400
-    
+
 """
+
 import os
 import sys
 import traceback
@@ -116,7 +117,8 @@ import numpy as np
 import soundfile as sf
 from fastapi import Response
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, Form
+from typing import Optional
 import uvicorn
 from io import BytesIO
 from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
@@ -136,7 +138,7 @@ port = args.port
 host = args.bind_addr
 argv = sys.argv
 
-APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"},{"url": "http://10.20.216.222:6616"}])
+APP = FastAPI(servers=[{"url": "https://cloud-gateway.ces.myfiinet.com/ai-audio/tts"}, {"url": "http://10.20.216.222:6616"}])
 
 
 class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
@@ -144,14 +146,16 @@ class CustomOpenAPIMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         base_url = str(request.base_url)
 
-        print(f'call from {base_url}')
+        print(f"call from {base_url}")
         if "cloud-gateway.ces.myfiinet.com" in base_url:
             APP.openapi_url = "/ai-audio/tts/openapi.json"
         else:
             APP.openapi_url = "openapi.json"
         return response
-    
+
+
 APP.add_middleware(CustomOpenAPIMiddleware)
+
 
 class TTS_Request(BaseModel):
     text: str = None
@@ -179,13 +183,15 @@ class TTS_Request(BaseModel):
 
 @lru_cache(maxsize=10)
 def get_tts_instance(tts_config: TTS_Config) -> TTS:
+    # 此方法使用config path當作key, 維持tts instance, 故假設我限制只使用同一位置之config path
+    # 則speaker為singleton
     print(f"load tts config from {tts_config.configs_path}")
     return TTS(tts_config)
 
 
 def pack_ogg(io_buffer: BytesIO, data: np.ndarray, rate: int):
     """modify from https://github.com/RVC-Boss/GPT-SoVITS/pull/894/files"""
-    with sf.SoundFile(io_buffer, mode='w', samplerate=rate, channels=1, format='ogg') as audio_file:
+    with sf.SoundFile(io_buffer, mode="w", samplerate=rate, channels=1, format="ogg") as audio_file:
         audio_file.write(data)
     return io_buffer
 
@@ -197,23 +203,35 @@ def pack_raw(io_buffer: BytesIO, data: np.ndarray, rate: int):
 
 def pack_wav(io_buffer: BytesIO, data: np.ndarray, rate: int):
     io_buffer = BytesIO()
-    sf.write(io_buffer, data, rate, format='wav')
+    sf.write(io_buffer, data, rate, format="wav")
     return io_buffer
 
 
 def pack_aac(io_buffer: BytesIO, data: np.ndarray, rate: int):
-    process = subprocess.Popen([
-        'ffmpeg',
-        '-f', 's16le',  # 输入16位有符号小端整数PCM
-        '-ar', str(rate),  # 设置采样率
-        '-ac', '1',  # 单声道
-        '-i', 'pipe:0',  # 从管道读取输入
-        '-c:a', 'aac',  # 音频编码器为AAC
-        '-b:a', '192k',  # 比特率
-        '-vn',  # 不包含视频
-        '-f', 'adts',  # 输出AAC数据流格式
-        'pipe:1'  # 将输出写入管道
-    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        [
+            "ffmpeg",
+            "-f",
+            "s16le",  # 输入16位有符号小端整数PCM
+            "-ar",
+            str(rate),  # 设置采样率
+            "-ac",
+            "1",  # 单声道
+            "-i",
+            "pipe:0",  # 从管道读取输入
+            "-c:a",
+            "aac",  # 音频编码器为AAC
+            "-b:a",
+            "192k",  # 比特率
+            "-vn",  # 不包含视频
+            "-f",
+            "adts",  # 输出AAC数据流格式
+            "pipe:1",  # 将输出写入管道
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     out, _ = process.communicate(input=data.tobytes())
     io_buffer.write(out)
     return io_buffer
@@ -269,11 +287,11 @@ def check_params(req: dict, tts_config: TTS_Config):
         return JSONResponse(status_code=400, content={"message": "ref_audio_path is required"})
     if text in [None, ""]:
         return JSONResponse(status_code=400, content={"message": "text is required"})
-    if (text_lang in [None, ""]):
+    if text_lang in [None, ""]:
         return JSONResponse(status_code=400, content={"message": "text_lang is required"})
     elif text_lang.lower() not in tts_config.languages:
         return JSONResponse(status_code=400, content={"message": "text_lang is not supported"})
-    if (prompt_lang in [None, ""]):
+    if prompt_lang in [None, ""]:
         return JSONResponse(status_code=400, content={"message": "prompt_lang is required"})
     elif prompt_lang.lower() not in tts_config.languages:
         return JSONResponse(status_code=400, content={"message": "prompt_lang is not supported"})
@@ -283,8 +301,7 @@ def check_params(req: dict, tts_config: TTS_Config):
         return JSONResponse(status_code=400, content={"message": "ogg format is not supported in non-streaming mode"})
 
     if text_split_method not in cut_method_names:
-        return JSONResponse(status_code=400,
-                            content={"message": f"text_split_method:{text_split_method} is not supported"})
+        return JSONResponse(status_code=400, content={"message": f"text_split_method:{text_split_method} is not supported"})
 
     return None
 
@@ -292,9 +309,9 @@ def check_params(req: dict, tts_config: TTS_Config):
 async def tts_handle(req: dict):
     """
     Text to speech handler.
-    
+
     Args:
-        req (dict): 
+        req (dict):
             {
                 "text": "",                   # str.(required) text to be synthesized
                 "text_lang: "",               # str.(required) language of the text to be synthesized
@@ -314,7 +331,7 @@ async def tts_handle(req: dict):
                 "media_type": "wav",          # str. media type of the output audio, support "wav", "raw", "ogg", "aac".
                 "streaming_mode": False,      # bool. whether to return a streaming response.
                 "parallel_infer": True,       # bool.(optional) whether to use parallel inference.
-                "repetition_penalty": 1.35    # float.(optional) repetition penalty for T2S model.          
+                "repetition_penalty": 1.35    # float.(optional) repetition penalty for T2S model.
             }
     returns:
         StreamingResponse: audio stream response.
@@ -322,6 +339,7 @@ async def tts_handle(req: dict):
 
     streaming_mode = req.get("streaming_mode", False)
     media_type = req.get("media_type", "wav")
+
     tts_infer_yaml_path = req.get("tts_infer_yaml_path", "GPT_SoVITS/configs/tts_infer.yaml")
 
     tts_config = TTS_Config(tts_infer_yaml_path)
@@ -340,6 +358,7 @@ async def tts_handle(req: dict):
         tts_generator = tts_instance.run(req)
 
         if streaming_mode:
+
             def streaming_generator(tts_generator: Generator, media_type: str):
                 if media_type == "wav":
                     yield wave_header_chunk()
@@ -349,7 +368,13 @@ async def tts_handle(req: dict):
                 # move_to_cpu(tts_instance)
 
             # _media_type = f"audio/{media_type}" if not (streaming_mode and media_type in ["wav", "raw"]) else f"audio/x-{media_type}"
-            return StreamingResponse(streaming_generator(tts_generator, media_type, ), media_type=f"audio/{media_type}")
+            return StreamingResponse(
+                streaming_generator(
+                    tts_generator,
+                    media_type,
+                ),
+                media_type=f"audio/{media_type}",
+            )
 
         else:
             sr, audio_data = next(tts_generator)
@@ -361,7 +386,7 @@ async def tts_handle(req: dict):
 
 
 def move_to_cpu(tts):
-    cpu_device = torch.device('cpu')
+    cpu_device = torch.device("cpu")
     tts.set_device(cpu_device, False)
     tts.enable_half_precision(False, False)
     print("Moved TTS models to CPU to save GPU memory.")
@@ -382,26 +407,26 @@ async def control(command: str = None):
 
 @APP.get("/tts")
 async def tts_get_endpoint(
-        text: str = None,
-        text_lang: str = None,
-        ref_audio_path: str = None,
-        prompt_lang: str = None,
-        prompt_text: str = "",
-        top_k: int = 5,
-        top_p: float = 1,
-        temperature: float = 1,
-        text_split_method: str = "cut0",
-        batch_size: int = 1,
-        batch_threshold: float = 0.75,
-        split_bucket: bool = True,
-        speed_factor: float = 1.0,
-        fragment_interval: float = 0.3,
-        seed: int = -1,
-        media_type: str = "wav",
-        streaming_mode: bool = False,
-        parallel_infer: bool = True,
-        repetition_penalty: float = 1.35,
-        tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml"
+    text: str = None,
+    text_lang: str = None,
+    ref_audio_path: str = None,
+    prompt_lang: str = None,
+    prompt_text: str = "",
+    top_k: int = 5,
+    top_p: float = 1,
+    temperature: float = 1,
+    text_split_method: str = "cut0",
+    batch_size: int = 1,
+    batch_threshold: float = 0.75,
+    split_bucket: bool = True,
+    speed_factor: float = 1.0,
+    fragment_interval: float = 0.3,
+    seed: int = -1,
+    media_type: str = "wav",
+    streaming_mode: bool = False,
+    parallel_infer: bool = True,
+    repetition_penalty: float = 1.35,
+    tts_infer_yaml_path: str = "GPT_SoVITS/configs/tts_infer.yaml",
 ):
     req = {
         "text": text,
@@ -423,7 +448,7 @@ async def tts_get_endpoint(
         "streaming_mode": streaming_mode,
         "parallel_infer": parallel_infer,
         "repetition_penalty": float(repetition_penalty),
-        "tts_infer_yaml_path": tts_infer_yaml_path
+        "tts_infer_yaml_path": tts_infer_yaml_path,
     }
 
     return await tts_handle(req)
@@ -433,6 +458,36 @@ async def tts_get_endpoint(
 async def tts_post_endpoint(request: TTS_Request):
     req = request.dict()
     return await tts_handle(req)
+
+
+@APP.post("/upload_speaker")
+async def upload_speaker(
+    name: Optional[str] = Query(None),
+    file: UploadFile = File(...),
+    # file_url: str = Form(default=None),
+):
+    SPEAKER_FOLDER_PATH = "./reference"
+    if not os.path.exists(SPEAKER_FOLDER_PATH):
+        os.makedirs(SPEAKER_FOLDER_PATH)
+
+    if name is None:
+        name = file.filename
+        if name is None:
+            return JSONResponse(status_code=400, content={"message": "file name is required in case of name is None"})
+
+    # if file_url is None:
+
+    file_path = os.path.join(SPEAKER_FOLDER_PATH, name)
+
+    if os.path.exists(file_path):
+        return JSONResponse(status_code=400, content={"message": f"speaker {name} already exists"})
+
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    # else:
+    # download from url with http
+
+    return JSONResponse(status_code=200, content={"message": "success"})
 
 
 @APP.get("/set_refer_audio")
