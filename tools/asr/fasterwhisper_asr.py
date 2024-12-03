@@ -68,10 +68,9 @@ def execute_asr(input_folder, output_folder, model_size, language, precision):
 
             if info.language == "zh":
                 print("检测为中文文本, 转 FunASR 处理")
-                if("only_asr"not in globals()):
-                    from tools.asr.funasr_asr import \
-                        only_asr  # #如果用英文就不需要导入下载模型
-                text = only_asr(file_path)
+                if("only_asr" not in globals()):
+                    from tools.asr.funasr_asr import only_asr  #如果用英文就不需要导入下载模型
+                text = only_asr(file_path, language=info.language.lower())
 
             if text == '':
                 for segment in segments:
@@ -101,8 +100,8 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--language", type=str, default='ja',
                         choices=language_code_list,
                         help="Language of the audio files.")
-    parser.add_argument("-p", "--precision", type=str, default='float16', choices=['float16','float32'],
-                        help="fp16 or fp32")
+    parser.add_argument("-p", "--precision", type=str, default='float16', choices=['float16','float32','int8'],
+                        help="fp16, int8 or fp32")
 
     cmd = parser.parse_args()
     output_file_path = execute_asr(
