@@ -121,7 +121,7 @@ import glob
 import numpy as np
 import soundfile as sf
 import uvicorn
-from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile,Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -533,9 +533,9 @@ async def tts_post_endpoint(request: TTS_Request):
 
 @APP.post("/speakers")
 async def upload_speaker(
-    name: str = Query(None),
-    prompt_lang: Optional[str] = Query(None),
-    prompt_text: Optional[str] = Query(None),
+    name: str = Form(None),
+    prompt_lang: Optional[str] = Form(None),
+    prompt_text: Optional[str] = Form(None),
     file: UploadFile = File(...),
     # file_url: str = Form(default=None),
 ):
