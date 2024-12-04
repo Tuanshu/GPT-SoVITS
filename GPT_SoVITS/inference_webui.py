@@ -767,6 +767,7 @@ if __name__ == '__main__':
         server_name="0.0.0.0",
         inbrowser=True,
         share=is_share,
-        server_port=infer_ttswebui,
+        #server_port=infer_ttswebui,
+        server_port=9873,
         quiet=True,
     )
