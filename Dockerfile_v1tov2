@@ -1,0 +1,14 @@
+# breakstring/gpt-sovits:latest
+FROM msoo.ces.myfiinet.com:6702/gpt-sovits:0.1.0-20241203
+
+# pip install new deps
+# rotary_embedding_torch
+# pyjyutping 
+# g2pk2
+# ko_pron
+# opencc; sys_platform != 'linux'
+# opencc==1.1.1; sys_platform == 'linux'
+# python_mecab_ko; sys_platform != 'win32'
+# fastapi<0.112.2
+
+RUN pip install -r requirements_diff.txt
