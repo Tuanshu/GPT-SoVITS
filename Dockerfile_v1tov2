@@ -11,4 +11,6 @@ FROM msoo.ces.myfiinet.com:6702/gpt-sovits:0.1.0-20241203
 # python_mecab_ko; sys_platform != 'win32'
 # fastapi<0.112.2
 
+COPY requirements_diff.txt requirements_diff.txt
+
 RUN pip install -r requirements_diff.txt

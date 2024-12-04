@@ -114,7 +114,7 @@ import glob
 import numpy as np
 import soundfile as sf
 import uvicorn
-from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -131,7 +131,9 @@ cut_method_names = get_cut_method_names()
 
 parser = argparse.ArgumentParser(description="GPT-SoVITS api")
 parser.add_argument("-c", "--tts_config", type=str, default="GPT_SoVITS/configs/tts_infer.yaml", help="tts_infer路径")
-parser.add_argument("-a", "--bind_addr", type=str, default="127.0.0.1", help="default: 127.0.0.1")
+#parser.add_argument("-a", "--bind_addr", type=str, default="127.0.0.1", help="default: 127.0.0.1")
+parser.add_argument("-a", "--bind_addr", type=str, default="0.0.0.0", help="default: 0.0.0.0")
+
 parser.add_argument("-p", "--port", type=int, default="9880", help="default: 9880")
 args = parser.parse_args()
 config_path = args.tts_config
@@ -446,7 +448,7 @@ async def tts_get_endpoint(
     text: str = None,
     text_lang: str = None,
     ref_audio_path: str = None,
-    aux_ref_audio_paths: list = None,
+    aux_ref_audio_paths: list = Query(None),
     prompt_lang: str = None,
     prompt_text: str = "",
     top_k: int = 5,

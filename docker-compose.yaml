@@ -33,7 +33,8 @@ services:
               #count: "all"
               capabilities: [gpu]
               device_ids: ["1"]
-    command: ["sh", "-c", "python api_v3.py"]
+    #command: ["sh", "-c", "python api_v3.py"]
+    command: ["sh", "-c", "python api_v2.py"]
     stdin_open: true
     tty: true
     restart: unless-stopped
