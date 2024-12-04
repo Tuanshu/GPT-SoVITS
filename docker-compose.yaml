@@ -21,7 +21,7 @@ services:
     ports:
       - "6616:9880" # api
       # - "9871:9871"
-      # - "6607:9872" # infer webui
+      - "6617:9872" # infer webui
       # - "9873:9873"
       # - "9874:9874"
     shm_size: 16G
@@ -34,7 +34,10 @@ services:
               capabilities: [gpu]
               device_ids: ["1"]
     #command: ["sh", "-c", "python api_v3.py"]
-    command: ["sh", "-c", "python api_v2.py"]
+    # command: ["sh", "-c", "python api_v2.py", "&&", "python GPT_SoVITS/inference_webui.py"]
+    #command: ["sh", "-c", "python GPT_SoVITS/inference_webui_fast.py"]
+    command: ["sh", "-c", "python GPT_SoVITS/inference_hugginface_clean.py"]
+
     stdin_open: true
     tty: true
     restart: unless-stopped
