@@ -167,8 +167,8 @@ class TextPreprocessor:
                         # 因无法区别中日韩文汉字,以用户输入为准
                         langlist.append(language)
                     textlist.append(tmp["text"])
-            # print(textlist)
-            # print(langlist)
+            print(textlist)
+            print(langlist)
             phones_list = []
             bert_list = []
             norm_text_list = []

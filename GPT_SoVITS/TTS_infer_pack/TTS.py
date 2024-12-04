@@ -820,6 +820,8 @@ class TTS:
                             )
                 return batch[0]
 
+        print(f"### 即將推理, data = {data}")
+
 
         t2 = ttime()
         try:
