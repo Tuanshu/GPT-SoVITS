@@ -447,6 +447,7 @@ async def control(command: str = None):
 async def tts_get_endpoint(
     text: str = None,
     text_lang: str = None,
+    speaker: str = None,  # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
     ref_audio_path: str = None,
     aux_ref_audio_paths: list = Query(None),
     prompt_lang: str = None,
@@ -466,6 +467,18 @@ async def tts_get_endpoint(
     parallel_infer: bool = True,
     repetition_penalty: float = 1.35,
 ):
+    # 如果speaker有給, 則忽略ref_audio_path, prompt_lang, prompt_text
+    if speaker is not None:
+        speaker_obj = Speaker.get_by_name(speaker)
+        if speaker_obj is None:
+            return JSONResponse(status_code=400, content={"message": f"speaker {speaker} not found"})
+        ref_audio_path = speaker_obj.audio_path
+        prompt_lang = speaker_obj.prompt_lang
+        prompt_text = speaker_obj.prompt_text
+
+    # ensure prompt_lang is not None for stupid bug
+    if prompt_lang is None:
+        prompt_lang = ""
     req = {
         "text": text,
         "text_lang": text_lang.lower(),
