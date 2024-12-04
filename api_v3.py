@@ -110,6 +110,7 @@ sys.path.append(now_dir)
 sys.path.append("%s/GPT_SoVITS" % (now_dir))
 
 import argparse
+import glob
 import json
 import signal
 import subprocess
@@ -117,11 +118,11 @@ import wave
 from functools import lru_cache
 from io import BytesIO
 from typing import Optional, Union
-import glob
+
 import numpy as np
 import soundfile as sf
 import uvicorn
-from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile,Form
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
