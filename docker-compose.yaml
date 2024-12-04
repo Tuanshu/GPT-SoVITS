@@ -38,7 +38,8 @@ services:
     # command: ["sh", "-c", "python api_v2.py", "&&", "python GPT_SoVITS/inference_webui.py"]
     #command: ["sh", "-c", "python GPT_SoVITS/inference_webui_fast.py"]
     # command: ["sh", "-c", "python GPT_SoVITS/inference_hugginface_clean.py"]
-    command: ["sh", "-c", "python api_v2.py & python GPT_SoVITS/inference_hugginface_clean.py & python GPT_SoVITS/inference_webui.py"]
+    # command: ["sh", "-c", "python api_v2.py & python GPT_SoVITS/inference_hugginface_clean.py & python GPT_SoVITS/inference_webui.py"]
+    command: ["sh", "-c", "python api_v2.py"]
 
     stdin_open: true
     tty: true
