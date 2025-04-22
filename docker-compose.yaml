@@ -21,8 +21,8 @@ services:
     ports:
       - "6616:9880" # api
       # - "9871:9871"
-      - "6617:9872" # infer webui
-      - "6618:9873" # infer webui
+      # - "6617:9872" # infer webui
+      # - "6618:9873" # infer webui
       # - "9873:9873"
       # - "9874:9874"
     shm_size: 16G
