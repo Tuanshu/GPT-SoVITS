@@ -447,7 +447,7 @@ async def control(command: str = None):
 async def tts_get_endpoint(
     text: str = None,
     text_lang: str = None,
-    speaker: str = None,  # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
+    speaker: str = "harvard",  # if given, ignore ref_audio_path,  prompt_lang, and, prompt_text
     ref_audio_path: str = None,
     aux_ref_audio_paths: list = Query(None),
     prompt_lang: str = None,
